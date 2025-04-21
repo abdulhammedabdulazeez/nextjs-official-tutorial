@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
-import { CustomerField, InvoiceForm } from '@/app/lib/definitions';
+import { CustomerField, InvoiceForm } from "@/app/lib/definitions";
 import {
   CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
   UserCircleIcon,
-} from '@heroicons/react/24/outline';
-import Link from 'next/link';
-import { Button } from '@/app/ui/button';
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { Button } from "@/app/ui/button";
+import { updateInvoice, State } from "@/app/lib/actions";
+import { useActionState } from "react";
 
 export default function EditInvoiceForm({
   invoice,
@@ -17,8 +19,14 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
+  const initialState: State = { message: null, errors: {} };
+  // const updateInvoiceWithId = updateInvoice.bind(null, initialState, invoice.id);
+  const updateInvoiceWithId = async (prevState: State, formData: FormData) => {
+    return updateInvoice(prevState, invoice.id, formData);
+  };
+  const [state, formAction] = useActionState(updateInvoiceWithId, initialState);
   return (
-    <form>
+    <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
@@ -31,6 +39,7 @@ export default function EditInvoiceForm({
               name="customerId"
               className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
               defaultValue={invoice.customer_id}
+              aria-describedby="customer-update-error"
             >
               <option value="" disabled>
                 Select a customer
@@ -42,6 +51,14 @@ export default function EditInvoiceForm({
               ))}
             </select>
             <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
+          </div>
+          <div id="customer-update-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.customerId &&
+              state.errors.customerId.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
           </div>
         </div>
 
@@ -60,8 +77,17 @@ export default function EditInvoiceForm({
                 defaultValue={invoice.amount}
                 placeholder="Enter USD amount"
                 className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
+                aria-describedby="amount-update-error"
               />
               <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+            </div>
+            <div id="amount-update-error" aria-live="polite" aria-atomic="true">
+              {state.errors?.amount &&
+                state.errors.amount.map((error: string) => (
+                  <p className="mt-2 text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
             </div>
           </div>
         </div>
@@ -72,14 +98,14 @@ export default function EditInvoiceForm({
             Set the invoice status
           </legend>
           <div className="rounded-md border border-gray-200 bg-white px-[14px] py-3">
-            <div className="flex gap-4">
+            <div className="flex gap-4" aria-describedby="status-update-error">
               <div className="flex items-center">
                 <input
                   id="pending"
                   name="status"
                   type="radio"
                   value="pending"
-                  defaultChecked={invoice.status === 'pending'}
+                  defaultChecked={invoice.status === "pending"}
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
                 />
                 <label
@@ -95,7 +121,7 @@ export default function EditInvoiceForm({
                   name="status"
                   type="radio"
                   value="paid"
-                  defaultChecked={invoice.status === 'paid'}
+                  defaultChecked={invoice.status === "paid"}
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
                 />
                 <label
@@ -106,6 +132,19 @@ export default function EditInvoiceForm({
                 </label>
               </div>
             </div>
+          </div>
+          <div id="status-update-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.status &&
+              state.errors.status.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
+          <div aria-live="polite" aria-atomic="true">
+            {state.message && (
+              <p className="mt-2 text-sm text-red-500">{state.message}</p>
+            )}
           </div>
         </fieldset>
       </div>
